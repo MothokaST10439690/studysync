@@ -1,0 +1,8 @@
+﻿# StudySync .gitignore
+/config/db_connect.php
+/uploads/
+/vendor/
+.env
+*.log
+.DS_Store
+Thumbs.db
