@@ -1,4 +1,5 @@
 <?php
+
 // layout.php — Obsidian & Copper theme
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 ?>
