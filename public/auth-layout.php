@@ -1,5 +1,8 @@
 <?php
+
+require __DIR__ . '/auth-layout.php';
 $pageTitle = $pageTitle ?? 'StudySync';
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
