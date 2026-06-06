@@ -1,7 +1,6 @@
 <?php
 $pageTitle = $pageTitle ?? 'StudySync';
 
-require __DIR__ . '/auth-layout.php';
 
 ?>
 <!DOCTYPE html>
