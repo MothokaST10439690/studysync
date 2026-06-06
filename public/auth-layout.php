@@ -1,7 +1,7 @@
 <?php
+$pageTitle = $pageTitle ?? 'StudySync';
 
 require __DIR__ . '/auth-layout.php';
-$pageTitle = $pageTitle ?? 'StudySync';
 
 ?>
 <!DOCTYPE html>
