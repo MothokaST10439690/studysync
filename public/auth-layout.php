@@ -283,7 +283,7 @@ body {
 <script>
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('/service-worker.php')
             .then(reg => console.log('SW registered:', reg.scope))
             .catch(err => console.log('SW error:', err));
     });
