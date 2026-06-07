@@ -253,6 +253,44 @@ body {
     .auth-left { display: none; }
 }
 </style>
+
+
+<!-- ── PWA ──────────────────────────────────────────────────
+     Paste this block inside <head> in layout.php AND auth-layout.php
+     just before the closing </head> tag
+─────────────────────────────────────────────────────────── -->
+
+<!-- PWA manifest -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- Theme colour (browser chrome on Android) -->
+<meta name="theme-color" content="#161412">
+
+<!-- iOS home screen support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StudySync">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+<!-- Windows tile -->
+<meta name="msapplication-TileImage" content="/icons/icon-144.png">
+<meta name="msapplication-TileColor" content="#161412">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96.png">
+
+<!-- Register service worker -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(reg => console.log('SW registered:', reg.scope))
+            .catch(err => console.log('SW error:', err));
+    });
+}
+</script>
+
+
 </head>
 
 <body>
