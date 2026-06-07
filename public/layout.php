@@ -1,6 +1,5 @@
 <?php
-
-// layout.php — Obsidian & Copper theme
+// layout.php — Obsidian & Copper theme — fully responsive
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 ?>
 <!DOCTYPE html>
@@ -65,6 +64,21 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d8cfc5; border-radius: 10px; }
 
+    /* ── MOBILE OVERLAY ─────────────────────────────────────── */
+    .ss-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.6);
+        z-index: 150;
+        opacity: 0;
+        transition: opacity .25s;
+    }
+    .ss-overlay.open {
+        display: block;
+        opacity: 1;
+    }
+
     /* ── SIDEBAR ────────────────────────────────────────────── */
     .ss-sidebar {
         width: 264px;
@@ -74,11 +88,17 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         flex-direction: column;
         flex-shrink: 0;
         border-right: 1px solid var(--sidebar-border);
+        transition: transform .25s ease;
+        z-index: 200;
+        position: relative;
     }
 
     .ss-logo {
         padding: 22px 20px 18px;
         border-bottom: 1px solid var(--sidebar-border);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
     }
 
     .ss-logo-mark {
@@ -98,6 +118,19 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         color: rgba(255,255,255,.28);
         margin-top: 2px;
         letter-spacing: 0.3px;
+    }
+
+    /* Close button — mobile only */
+    .ss-close-btn {
+        display: none;
+        background: none;
+        border: none;
+        color: rgba(255,255,255,.4);
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+        flex-shrink: 0;
     }
 
     .ss-nav {
@@ -122,7 +155,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 9px 10px;
+        padding: 10px 10px;
         border-radius: 6px;
         color: var(--text-sidebar);
         font-size: 13.5px;
@@ -222,6 +255,19 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         flex-shrink: 0;
     }
 
+    /* Hamburger — hidden on desktop */
+    .ss-hamburger {
+        display: none;
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 22px;
+        cursor: pointer;
+        padding: 2px;
+        flex-shrink: 0;
+        line-height: 1;
+    }
+
     .ss-topbar-title {
         font-family: 'Playfair Display', serif;
         font-size: 17px;
@@ -263,7 +309,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
     /* ── SHARED COMPONENTS ──────────────────────────────────── */
 
-    /* Cards */
     .card,
     .card-modern {
         background: var(--card);
@@ -272,7 +317,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         overflow: hidden;
     }
 
-    /* Page hero banner */
     .page-hero {
         background: var(--sidebar);
         border-radius: 18px;
@@ -313,7 +357,29 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
     .page-hero-sub { font-size: 13px; color: rgba(255,255,255,.5); }
 
-    /* Stat cards */
+    /* Hero action button — goes absolute on desktop, inline on mobile */
+    .hero-action-btn {
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 9px 18px;
+        border-radius: 10px;
+        background: transparent;
+        border: 1px solid var(--copper-border);
+        color: var(--copper);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        z-index: 1;
+        transition: background .15s;
+    }
+    .hero-action-btn:hover { background: var(--copper-dim); }
+
     .stat-card {
         background: var(--card);
         border: 1px solid var(--border);
@@ -337,21 +403,14 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         color: var(--text-primary);
     }
 
-    .stat-card.copper-tint {
-        background: #fdf8f2;
-        border-color: #eed8b8;
-    }
+    .stat-card.copper-tint { background: #fdf8f2; border-color: #eed8b8; }
     .stat-card.copper-tint .stat-card-label { color: #9a6030; }
     .stat-card.copper-tint .stat-card-value { color: var(--copper-dark); }
 
-    .stat-card.red-tint {
-        background: var(--red-bg);
-        border-color: var(--red-border);
-    }
+    .stat-card.red-tint { background: var(--red-bg); border-color: var(--red-border); }
     .stat-card.red-tint .stat-card-label { color: #943228; }
     .stat-card.red-tint .stat-card-value { color: var(--red); }
 
-    /* Buttons */
     .btn-primary {
         display: inline-flex;
         align-items: center;
@@ -370,15 +429,9 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
     }
 
     .btn-primary:hover { background: #2c211a; }
-
-    .btn-copper {
-        background: var(--copper) !important;
-        color: #fff !important;
-    }
-
+    .btn-copper  { background: var(--copper) !important; color: #fff !important; }
     .btn-copper:hover { background: var(--copper-dark) !important; }
 
-    /* Status pills */
     .pill {
         font-size: 11px;
         font-weight: 600;
@@ -398,7 +451,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
     .pill-private { background: var(--amber-bg);  color: var(--amber);  border: 1px solid var(--amber-border); }
     .pill-public  { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border); }
 
-    /* Form inputs — used in modals + filters */
     .ss-input {
         width: 100%;
         padding: 10px 14px;
@@ -411,7 +463,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         outline: none;
         transition: border-color .15s;
     }
-
     .ss-input:focus { border-color: var(--copper); }
 
     .ss-label {
@@ -422,7 +473,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         margin-bottom: 6px;
     }
 
-    /* Section heading */
     .section-heading {
         font-family: 'Playfair Display', serif;
         font-size: 20px;
@@ -431,13 +481,14 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         color: var(--text-primary);
     }
 
-    /* Panel header (card header row) */
     .panel-header {
         padding: 15px 20px;
         border-bottom: 1px solid var(--border-soft);
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .panel-title { font-size: 13.5px; font-weight: 600; }
@@ -451,7 +502,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
     }
     .panel-link:hover { color: var(--copper); }
 
-    /* Table shared styles */
     .ss-table { width: 100%; border-collapse: collapse; }
     .ss-table thead { background: var(--cream); }
     .ss-table th {
@@ -475,7 +525,12 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
     .ss-table tbody tr:last-child td { border-bottom: none; }
     .ss-table tbody tr:hover td { background: var(--cream); }
 
-    /* Modal backdrop */
+    /* Scrollable table wrapper */
+    .ss-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
     .ss-modal-bg {
         position: fixed;
         inset: 0;
@@ -485,7 +540,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         align-items: center;
         justify-content: center;
         z-index: 500;
-        padding: 20px;
+        padding: 16px;
     }
 
     .ss-modal {
@@ -495,6 +550,8 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         max-width: 480px;
         box-shadow: 0 20px 60px rgba(0,0,0,.18);
         overflow: hidden;
+        max-height: 92vh;
+        overflow-y: auto;
     }
 
     .ss-modal-head {
@@ -516,6 +573,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         display: flex;
         justify-content: flex-end;
         gap: 10px;
+        flex-wrap: wrap;
     }
 
     .btn-ghost {
@@ -531,46 +589,154 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
     }
     .btn-ghost:hover { background: #ede8e2; }
 
-    /* Empty state */
     .empty-state {
         padding: 52px 20px;
         text-align: center;
         color: var(--text-muted);
     }
     .empty-state p { font-size: 13px; margin-top: 8px; }
+
+    /* ── MOBILE BOTTOM NAV ──────────────────────────────────── */
+    .ss-bottom-nav {
+        display: none;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: 64px;
+        background: var(--sidebar);
+        border-top: 1px solid var(--sidebar-border);
+        z-index: 100;
+        padding: 0 4px;
+    }
+
+    .ss-bottom-nav-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        height: 100%;
+    }
+
+    .ss-bnav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 6px 8px;
+        border-radius: 10px;
+        text-decoration: none;
+        color: rgba(255,255,255,.38);
+        font-size: 10px;
+        font-weight: 500;
+        transition: color .15s;
+        min-width: 54px;
+    }
+
+    .ss-bnav-item .bi { font-size: 19px; }
+    .ss-bnav-item.active { color: var(--copper); }
+    .ss-bnav-item:hover  { color: rgba(255,255,255,.75); }
+
+    /* ══════════════════════════════════════════════════════════
+       RESPONSIVE
+       ══════════════════════════════════════════════════════════ */
+
+    @media (max-width: 900px) {
+
+        /* Sidebar slides off-screen, comes back on open */
+        .ss-sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 100%;
+            transform: translateX(-100%);
+            z-index: 200;
+        }
+
+        .ss-sidebar.open { transform: translateX(0); }
+
+        /* Show hamburger + close button */
+        .ss-hamburger  { display: block; }
+        .ss-close-btn  { display: block; }
+
+        /* Content padding + extra bottom space for bottom nav */
+        .ss-content { padding: 18px 16px 80px; }
+        .ss-topbar  { padding: 0 16px; }
+
+        /* Hero */
+        .page-hero       { padding: 20px 20px 20px; }
+        .page-hero-title { font-size: 26px; }
+
+        /* Hero action button stacks below text */
+        .hero-action-btn {
+            position: static;
+            transform: none;
+            margin-top: 16px;
+            align-self: flex-start;
+        }
+
+        /* Show bottom nav */
+        .ss-bottom-nav { display: block; }
+
+        /* Tables scroll on touch */
+        .ss-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    }
+
+    @media (max-width: 540px) {
+
+        .ss-content  { padding: 14px 12px 80px; }
+        .ss-topbar   { padding: 0 12px; gap: 8px; }
+
+        .page-hero       { padding: 18px 16px; border-radius: 14px; }
+        .page-hero-title { font-size: 22px; }
+        .page-hero-sub   { font-size: 12px; }
+
+        .stat-card-value { font-size: 24px; }
+
+        .ss-modal-head   { padding: 18px 18px 14px; }
+        .ss-modal-body   { padding: 16px 18px; }
+        .ss-modal-footer { padding: 12px 18px; }
+
+        .btn-primary { font-size: 12px; padding: 8px 14px; }
+    }
     </style>
 </head>
 <body>
 
-    <!-- SIDEBAR -->
-    <aside class="ss-sidebar">
+    <!-- Dark overlay (mobile) -->
+    <div class="ss-overlay" id="ssOverlay" onclick="closeSidebar()"></div>
+
+    <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+    <aside class="ss-sidebar" id="ssSidebar">
 
         <div class="ss-logo">
-            <a href="dashboard.php" class="ss-logo-mark">Study<span>Sync</span></a>
-            <div class="ss-logo-sub">Smart Student Collaboration</div>
+            <div>
+                <a href="dashboard.php" class="ss-logo-mark">Study<span>Sync</span></a>
+                <div class="ss-logo-sub">Smart Student Collaboration</div>
+            </div>
+            <button class="ss-close-btn" onclick="closeSidebar()" aria-label="Close menu">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
 
         <nav class="ss-nav">
             <div class="ss-nav-label">Main</div>
-            <a href="dashboard.php" class="<?= $current_page === 'dashboard' ? 'active' : '' ?>">
+            <a href="dashboard.php" onclick="closeSidebar()" class="<?= $current_page === 'dashboard' ? 'active' : '' ?>">
                 <i class="bi bi-grid-1x2-fill"></i> Dashboard
             </a>
-            <a href="groups.php" class="<?= in_array($current_page, ['groups','group']) ? 'active' : '' ?>">
+            <a href="groups.php" onclick="closeSidebar()" class="<?= in_array($current_page, ['groups','group']) ? 'active' : '' ?>">
                 <i class="bi bi-people-fill"></i> Study Groups
             </a>
-            <a href="tasks.php" class="<?= $current_page === 'tasks' ? 'active' : '' ?>">
+            <a href="tasks.php" onclick="closeSidebar()" class="<?= $current_page === 'tasks' ? 'active' : '' ?>">
                 <i class="bi bi-check2-square"></i> Tasks
             </a>
-            <a href="files.php" class="<?= $current_page === 'files' ? 'active' : '' ?>">
+            <a href="files.php" onclick="closeSidebar()" class="<?= $current_page === 'files' ? 'active' : '' ?>">
                 <i class="bi bi-folder-fill"></i> Files
             </a>
-            <a href="calendar.php" class="<?= $current_page === 'calendar' ? 'active' : '' ?>">
+            <a href="calendar.php" onclick="closeSidebar()" class="<?= $current_page === 'calendar' ? 'active' : '' ?>">
                 <i class="bi bi-calendar-event-fill"></i> Calendar
             </a>
 
             <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
             <div class="ss-nav-label" style="margin-top:8px;">Administration</div>
-            <a href="admin.php" class="<?= $current_page === 'admin' ? 'active' : '' ?>">
+            <a href="admin.php" onclick="closeSidebar()" class="<?= $current_page === 'admin' ? 'active' : '' ?>">
                 <i class="bi bi-shield-lock-fill"></i> Admin Panel
             </a>
             <?php endif; ?>
@@ -593,11 +759,14 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
     </aside>
 
-    <!-- MAIN -->
+    <!-- ── MAIN ───────────────────────────────────────────── -->
     <div class="ss-main">
 
         <!-- Topbar -->
         <header class="ss-topbar">
+            <button class="ss-hamburger" onclick="openSidebar()" aria-label="Open menu">
+                <i class="bi bi-list"></i>
+            </button>
             <div class="ss-topbar-title"><?= ucwords(str_replace('-', ' ', $current_page)) ?></div>
             <div class="ss-topbar-right">
                 <a href="logout.php" class="ss-icon-btn" title="Sign out">
@@ -612,6 +781,51 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         </div>
 
     </div>
+
+    <!-- ── MOBILE BOTTOM NAV ──────────────────────────────── -->
+    <nav class="ss-bottom-nav" aria-label="Mobile navigation">
+        <div class="ss-bottom-nav-inner">
+            <a href="dashboard.php" class="ss-bnav-item <?= $current_page === 'dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>Home</span>
+            </a>
+            <a href="groups.php" class="ss-bnav-item <?= in_array($current_page, ['groups','group']) ? 'active' : '' ?>">
+                <i class="bi bi-people-fill"></i>
+                <span>Groups</span>
+            </a>
+            <a href="tasks.php" class="ss-bnav-item <?= $current_page === 'tasks' ? 'active' : '' ?>">
+                <i class="bi bi-check2-square"></i>
+                <span>Tasks</span>
+            </a>
+            <a href="files.php" class="ss-bnav-item <?= $current_page === 'files' ? 'active' : '' ?>">
+                <i class="bi bi-folder-fill"></i>
+                <span>Files</span>
+            </a>
+            <a href="calendar.php" class="ss-bnav-item <?= $current_page === 'calendar' ? 'active' : '' ?>">
+                <i class="bi bi-calendar-event-fill"></i>
+                <span>Calendar</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+    function openSidebar() {
+        document.getElementById('ssSidebar').classList.add('open');
+        document.getElementById('ssOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+        document.getElementById('ssSidebar').classList.remove('open');
+        document.getElementById('ssOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeSidebar();
+    });
+    </script>
 
 </body>
 </html>

@@ -14,26 +14,39 @@ $overdueTasks = array_filter($myTasks, fn($t) =>
 $stats = ($_SESSION['user_role'] === 'admin') ? getAdminStats() : null;
 ?>
 
+<style>
+/* ── DASHBOARD RESPONSIVE ───────────────────────────────── */
+.dash-stats   { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+.dash-quick   { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px; }
+.dash-bottom  { display:grid; grid-template-columns:1fr 340px; gap:18px; }
+.dash-admin   { display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+.dash-admin-stats { display:flex; gap:32px; flex-wrap:wrap; }
+
+@media (max-width: 900px) {
+    .dash-stats  { grid-template-columns:repeat(2,1fr); gap:10px; }
+    .dash-quick  { grid-template-columns:repeat(2,1fr); gap:10px; }
+    .dash-bottom { grid-template-columns:1fr; }
+}
+
+@media (max-width: 540px) {
+    .dash-stats  { grid-template-columns:repeat(2,1fr); gap:8px; }
+    .dash-quick  { grid-template-columns:1fr; gap:8px; }
+    .dash-admin-stats { gap:18px; }
+}
+</style>
+
 <!-- ── HERO ───────────────────────────────────────────────── -->
 <div class="page-hero" style="margin-bottom:24px;">
     <div class="page-hero-eyebrow">Welcome Back</div>
     <div class="page-hero-title"><?= htmlspecialchars($_SESSION['user_name']) ?></div>
     <div class="page-hero-sub"><?= date('l, d F Y') ?></div>
-    <a href="groups.php" style="
-        position:absolute; right:30px; top:50%; transform:translateY(-50%);
-        padding:9px 18px; border-radius:10px; background:transparent;
-        border:1px solid rgba(205,133,63,.28); color:#cd853f;
-        font-size:13px; font-weight:600; text-decoration:none;
-        display:flex; align-items:center; gap:6px; z-index:1;
-        transition:background .15s;
-    " onmouseover="this.style.background='rgba(205,133,63,.12)'"
-       onmouseout="this.style.background='transparent'">
+    <a href="groups.php" class="hero-action-btn">
         Browse Groups <i class="bi bi-arrow-right"></i>
     </a>
 </div>
 
 <!-- ── STAT CARDS ────────────────────────────────────────── -->
-<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;">
+<div class="dash-stats">
 
     <div class="stat-card">
         <div class="stat-card-label"><i class="bi bi-people-fill" style="margin-right:5px;"></i>My Groups</div>
@@ -58,13 +71,13 @@ $stats = ($_SESSION['user_role'] === 'admin') ? getAdminStats() : null;
 </div>
 
 <!-- ── QUICK ACTIONS ─────────────────────────────────────── -->
-<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px;">
+<div class="dash-quick">
 
     <?php
     $quickActions = [
-        ['href'=>'groups.php',   'icon'=>'bi-people-fill',          'title'=>'Browse Groups', 'desc'=>'Discover and join study communities'],
-        ['href'=>'tasks.php',    'icon'=>'bi-check2-square',         'title'=>'Manage Tasks',  'desc'=>'Track assignments and deadlines'],
-        ['href'=>'calendar.php', 'icon'=>'bi-calendar-event-fill',   'title'=>'Calendar',      'desc'=>'View upcoming deadlines at a glance'],
+        ['href'=>'groups.php',   'icon'=>'bi-people-fill',        'title'=>'Browse Groups', 'desc'=>'Discover and join study communities'],
+        ['href'=>'tasks.php',    'icon'=>'bi-check2-square',       'title'=>'Manage Tasks',  'desc'=>'Track assignments and deadlines'],
+        ['href'=>'calendar.php', 'icon'=>'bi-calendar-event-fill', 'title'=>'Calendar',      'desc'=>'View upcoming deadlines at a glance'],
     ];
     foreach ($quickActions as $qa):
     ?>
@@ -91,37 +104,39 @@ $stats = ($_SESSION['user_role'] === 'admin') ? getAdminStats() : null;
 <!-- ── ADMIN STRIP ────────────────────────────────────────── -->
 <?php if ($stats): ?>
 <div style="background:var(--sidebar);border:1px solid var(--sidebar-border);border-radius:14px;
-            padding:20px 24px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:20px;">
-    <div>
-        <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#fff;
-                    display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-            System Overview
-            <span style="font-family:'DM Sans',sans-serif;font-size:10px;padding:2px 8px;border-radius:20px;
-                         background:rgba(205,133,63,.12);color:#cd853f;border:1px solid rgba(205,133,63,.28);
-                         font-weight:500;letter-spacing:.3px;">Administrator</span>
-        </div>
-        <div style="display:flex;gap:32px;">
-            <?php foreach([
-                ['Users',  $stats['total_users']],
-                ['Groups', $stats['total_groups']],
-                ['Tasks',  $stats['total_tasks']],
-                ['Files',  $stats['total_files']],
-            ] as [$lbl,$val]): ?>
-            <div>
-                <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:4px;"><?= $lbl ?></div>
-                <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.5px;"><?= $val ?></div>
+            padding:20px 24px;margin-bottom:22px;">
+    <div class="dash-admin">
+        <div>
+            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#fff;
+                        display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+                System Overview
+                <span style="font-family:'DM Sans',sans-serif;font-size:10px;padding:2px 8px;border-radius:20px;
+                             background:rgba(205,133,63,.12);color:#cd853f;border:1px solid rgba(205,133,63,.28);
+                             font-weight:500;letter-spacing:.3px;">Administrator</span>
             </div>
-            <?php endforeach; ?>
+            <div class="dash-admin-stats">
+                <?php foreach([
+                    ['Users',  $stats['total_users']],
+                    ['Groups', $stats['total_groups']],
+                    ['Tasks',  $stats['total_tasks']],
+                    ['Files',  $stats['total_files']],
+                ] as [$lbl,$val]): ?>
+                <div>
+                    <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:4px;"><?= $lbl ?></div>
+                    <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.5px;"><?= $val ?></div>
+                </div>
+                <?php endforeach; ?>
+            </div>
         </div>
+        <a href="admin.php" class="btn-primary btn-copper">
+            <i class="bi bi-shield-lock-fill"></i> Admin Panel
+        </a>
     </div>
-    <a href="admin.php" class="btn-primary btn-copper">
-        <i class="bi bi-shield-lock-fill"></i> Admin Panel
-    </a>
 </div>
 <?php endif; ?>
 
 <!-- ── TASKS + GROUPS ─────────────────────────────────────── -->
-<div style="display:grid;grid-template-columns:1fr 340px;gap:18px;">
+<div class="dash-bottom">
 
     <!-- Recent Tasks -->
     <div class="card">
@@ -212,5 +227,5 @@ $stats = ($_SESSION['user_role'] === 'admin') ? getAdminStats() : null;
 
 <?php
 $page_content = ob_get_clean();
-require 'layout.php';
+require __DIR__ . '/layout.php';
 ?>
