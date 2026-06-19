@@ -14,42 +14,54 @@ $group = $stmt->fetch();
 
 if (!$group) { ob_end_clean(); header('Location: groups.php'); exit; }
 
-$stmt = $pdo->prepare("SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?");
-$stmt->execute([$groupId, $_SESSION['user_id']]);
-if (!$stmt->fetch()) { ob_end_clean(); header('Location: groups.php'); exit; }
+$canManageGroup =
+    $_SESSION['user_role'] === 'admin' ||
+    isGroupCreator($groupId, $_SESSION['user_id']);
+
+$isMember = isGroupMember($groupId, $_SESSION['user_id']);
+
+if (!$isMember && !$canManageGroup) { ob_end_clean(); header('Location: groups.php'); exit; }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['delete_group']) && $canManageGroup) {
+        deleteGroup($groupId);
+
+        header('Location: groups.php');
+        exit;
+    }
+
+    if (isset($_POST['approve_request_id']) && $canManageGroup) {
+        approveJoinRequest((int)$_POST['approve_request_id'], $_SESSION['user_id']);
+        header("Location: group.php?id=$groupId&tab=members");
+        exit;
+    }
+
+    if (isset($_POST['reject_request_id']) && $canManageGroup) {
+        rejectJoinRequest((int)$_POST['reject_request_id'], $_SESSION['user_id']);
+        header("Location: group.php?id=$groupId&tab=members");
+        exit;
+    }
+
+    if (isset($_POST['remove_member_user_id']) && $canManageGroup) {
+        removeGroupMember($groupId, (int)$_POST['remove_member_user_id'], $_SESSION['user_id']);
+        header("Location: group.php?id=$groupId&tab=members");
+        exit;
+    }
+
+    if (isset($_POST['message']) && $isMember) {
+        $msg = trim($_POST['message']);
+        if (!empty($msg)) sendMessage($groupId, $_SESSION['user_id'], $msg);
+        header("Location: group.php?id=$groupId&tab=chat");
+        exit;
+    }
+}
 
 $tab      = $_GET['tab'] ?? 'tasks';
 $members  = getGroupMembers($groupId);
 $tasks    = getGroupTasks($groupId);
 $files    = getGroupFiles($groupId);
 $messages = getMessages($groupId);
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
-    $msg = trim($_POST['message']);
-    if (!empty($msg)) sendMessage($groupId, $_SESSION['user_id'], $msg);
-    header("Location: group.php?id=$groupId&tab=chat");
-    exit;
-}
-
-
-
-$canManageGroup =
-    $_SESSION['user_role'] === 'admin' ||
-    isGroupCreator($groupId, $_SESSION['user_id']);
-
-    $canManageGroup =
-    $_SESSION['user_role'] === 'admin' ||
-    isGroupCreator($groupId, $_SESSION['user_id']);
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST'
-    && isset($_POST['delete_group'])
-    && $canManageGroup) {
-
-    deleteGroup($groupId);
-
-    header('Location: groups.php');
-    exit;
-}
+$pendingJoinRequests = $canManageGroup ? getPendingJoinRequests($groupId) : [];
 
 $tabs = [
     'tasks'   => ['icon'=>'bi-check2-square',    'label'=>'Tasks'],
@@ -158,8 +170,52 @@ $tabs = [
 <!-- ── TAB CONTENT: MEMBERS ──────────────────────────────── -->
 <?php elseif ($tab === 'members'): ?>
 
+<?php if ($canManageGroup && !empty($pendingJoinRequests)): ?>
+<div class="card" style="margin-bottom:16px;">
+    <div class="panel-header">
+        <div>
+            <div class="panel-title">Join Requests</div>
+            <div class="panel-sub">Review students who want to join this group.</div>
+        </div>
+        <span class="pill pill-pending"><?= count($pendingJoinRequests) ?> pending</span>
+    </div>
+
+    <?php foreach ($pendingJoinRequests as $request): ?>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;
+                border-bottom:1px solid var(--border-soft);">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--copper-dim);
+                    border:1px solid var(--copper-border);display:flex;align-items:center;
+                    justify-content:center;font-weight:700;font-size:13px;color:var(--copper);flex-shrink:0;">
+            <?= strtoupper(substr($request['name'], 0, 1)) ?>
+        </div>
+        <div style="flex:1;min-width:0;">
+            <div style="font-size:13.5px;font-weight:600;"><?= htmlspecialchars($request['name']) ?></div>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
+                <?= htmlspecialchars($request['email']) ?> &middot; Requested <?= date('d M Y', strtotime($request['requested_at'])) ?>
+            </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+            <form method="POST" action="?id=<?= $groupId ?>&tab=members">
+                <input type="hidden" name="approve_request_id" value="<?= $request['request_id'] ?>">
+                <button type="submit" style="padding:6px 12px;border-radius:7px;border:1px solid var(--green-border);
+                        background:var(--green-bg);color:var(--green);font-size:12px;font-weight:600;
+                        cursor:pointer;font-family:'DM Sans',sans-serif;">Approve</button>
+            </form>
+            <form method="POST" action="?id=<?= $groupId ?>&tab=members">
+                <input type="hidden" name="reject_request_id" value="<?= $request['request_id'] ?>">
+                <button type="submit" style="padding:6px 12px;border-radius:7px;border:1px solid var(--red-border);
+                        background:var(--red-bg);color:var(--red);font-size:12px;font-weight:600;
+                        cursor:pointer;font-family:'DM Sans',sans-serif;">Decline</button>
+            </form>
+        </div>
+    </div>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
+
 <div class="card">
     <?php foreach ($members as $m): ?>
+    <?php $isCreator = (int)$m['user_id'] === (int)$group['created_by']; ?>
     <div style="display:flex;align-items:center;gap:12px;padding:13px 20px;
                 border-bottom:1px solid var(--border-soft);">
         <div style="width:36px;height:36px;border-radius:50%;background:var(--copper-dim);
@@ -167,8 +223,21 @@ $tabs = [
                     justify-content:center;font-weight:700;font-size:13px;color:var(--copper);flex-shrink:0;">
             <?= strtoupper(substr($m['name'], 0, 1)) ?>
         </div>
-        <div style="flex:1;">
-            <div style="font-size:13.5px;font-weight:600;"><?= htmlspecialchars($m['name']) ?></div>
+        <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;">
+                <div style="font-size:13.5px;font-weight:600;"><?= htmlspecialchars($m['name']) ?></div>
+                <?php if ($isCreator): ?>
+                    <span class="pill pill-admin">Creator</span>
+                <?php elseif ($canManageGroup): ?>
+                    <form method="POST" action="?id=<?= $groupId ?>&tab=members"
+                          onsubmit="return confirm('Remove this member from the group?')">
+                        <input type="hidden" name="remove_member_user_id" value="<?= $m['user_id'] ?>">
+                        <button type="submit" style="padding:5px 11px;border-radius:7px;border:1px solid var(--red-border);
+                                background:var(--red-bg);color:var(--red);font-size:12px;font-weight:600;
+                                cursor:pointer;font-family:'DM Sans',sans-serif;">Remove</button>
+                    </form>
+                <?php endif; ?>
+            </div>
             <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
                 <?= ucfirst($m['role']) ?> · Joined <?= date('d M Y', strtotime($m['joined_at'])) ?>
             </div>

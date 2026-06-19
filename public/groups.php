@@ -15,9 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: groups.php');
         exit;
     } 
-    if (isset($_POST['join_group_id'])) {
-        $groupId = (int)$_POST['join_group_id'];
-        if ($groupId > 0) joinGroup($groupId, $_SESSION['user_id']);
+    if (isset($_POST['request_join_group_id'])) {
+        $groupId = (int)$_POST['request_join_group_id'];
+        if ($groupId > 0) requestJoinGroup($groupId, $_SESSION['user_id']);
         header('Location: groups.php');
         exit;
     }
@@ -146,17 +146,21 @@ $publicGroups = getAllPublicGroups($_SESSION['user_id']);
             <div style="font-size:11px;color:var(--text-muted);margin-top:3px;"><?= $g['member_count'] ?> members</div>
         </div>
 
-        <form method="POST" style="flex-shrink:0;">
-            <input type="hidden" name="join_group_id" value="<?= $g['group_id'] ?>">
-            <button type="submit" style="
-                font-size:12px;font-weight:600;padding:7px 16px;border-radius:8px;
-                border:1px solid var(--copper-border);color:var(--copper-dark);
-                background:#fdf3e4;cursor:pointer;font-family:'DM Sans',sans-serif;
-                transition:background .15s;
-            " onmouseover="this.style.background='#f7e4c4'" onmouseout="this.style.background='#fdf3e4'">
-                Join Group
-            </button>
-        </form>
+        <?php if (!empty($g['pending_request_id'])): ?>
+            <span class="pill pill-pending" style="flex-shrink:0;">Request Pending</span>
+        <?php else: ?>
+            <form method="POST" style="flex-shrink:0;">
+                <input type="hidden" name="request_join_group_id" value="<?= $g['group_id'] ?>">
+                <button type="submit" style="
+                    font-size:12px;font-weight:600;padding:7px 16px;border-radius:8px;
+                    border:1px solid var(--copper-border);color:var(--copper-dark);
+                    background:#fdf3e4;cursor:pointer;font-family:'DM Sans',sans-serif;
+                    transition:background .15s;
+                " onmouseover="this.style.background='#f7e4c4'" onmouseout="this.style.background='#fdf3e4'">
+                    Request to Join
+                </button>
+            </form>
+        <?php endif; ?>
 
     </div>
     <?php endforeach; ?>

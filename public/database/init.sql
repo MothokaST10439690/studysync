@@ -54,6 +54,19 @@ CREATE TABLE `group_members` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `group_join_requests`
+--
+
+CREATE TABLE `group_join_requests` (
+  `request_id` int(11) NOT NULL,
+  `group_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `requested_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `messages`
 --
 
@@ -134,6 +147,14 @@ ALTER TABLE `group_members`
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Indexes for table `group_join_requests`
+--
+ALTER TABLE `group_join_requests`
+  ADD PRIMARY KEY (`request_id`),
+  ADD UNIQUE KEY `uq_join_request_group_user` (`group_id`,`user_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
 -- Indexes for table `messages`
 --
 ALTER TABLE `messages`
@@ -180,6 +201,12 @@ ALTER TABLE `group_members`
   MODIFY `member_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `group_join_requests`
+--
+ALTER TABLE `group_join_requests`
+  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
@@ -220,6 +247,13 @@ ALTER TABLE `files`
 ALTER TABLE `group_members`
   ADD CONSTRAINT `group_members_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `study_groups` (`group_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `group_members_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `group_join_requests`
+--
+ALTER TABLE `group_join_requests`
+  ADD CONSTRAINT `group_join_requests_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `study_groups` (`group_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `group_join_requests_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `messages`

@@ -38,15 +38,19 @@ function getAllPublicGroups(int $user_id): array {
     global $pdo;
     $stmt = $pdo->prepare("
         SELECT sg.*,
-               (SELECT COUNT(*) FROM group_members WHERE group_id = sg.group_id) AS member_count
+               (SELECT COUNT(*) FROM group_members WHERE group_id = sg.group_id) AS member_count,
+               gjr.request_id AS pending_request_id
         FROM study_groups sg
+        LEFT JOIN group_join_requests gjr
+               ON gjr.group_id = sg.group_id
+              AND gjr.user_id = ?
         WHERE sg.is_private = 0
           AND sg.group_id NOT IN (
               SELECT group_id FROM group_members WHERE user_id = ?
           )
         ORDER BY sg.group_name
     ");
-    $stmt->execute([$user_id]);
+    $stmt->execute([$user_id, $user_id]);
     return $stmt->fetchAll();
 }
 
@@ -97,6 +101,18 @@ function canManageGroup(int $groupId, int $userId): bool
     return isAdmin() || isGroupCreator($groupId, $userId);
 }
 
+function isGroupMember(int $group_id, int $user_id): bool {
+    global $pdo;
+    $stmt = $pdo->prepare("
+        SELECT 1
+        FROM group_members
+        WHERE group_id = ?
+          AND user_id = ?
+    ");
+    $stmt->execute([$group_id, $user_id]);
+    return (bool)$stmt->fetch();
+}
+
 //to chech creation of the group and to add the creator as a member of the group
 function isGroupCreator($groupId, $userId)
 {
@@ -122,6 +138,102 @@ function joinGroup(int $group_id, int $user_id): bool {
     // INSERT IGNORE silently skips if already a member (unique key on group_id + user_id)
     $stmt = $pdo->prepare("INSERT IGNORE INTO group_members (group_id, user_id) VALUES (?, ?)");
     return $stmt->execute([$group_id, $user_id]);
+}
+
+function requestJoinGroup(int $group_id, int $user_id): bool {
+    global $pdo;
+    if (isGroupMember($group_id, $user_id)) return false;
+
+    $stmt = $pdo->prepare("
+        INSERT IGNORE INTO group_join_requests (group_id, user_id)
+        VALUES (?, ?)
+    ");
+    return $stmt->execute([$group_id, $user_id]);
+}
+
+function getPendingJoinRequests(int $group_id): array {
+    global $pdo;
+    $stmt = $pdo->prepare("
+        SELECT gjr.request_id, gjr.group_id, gjr.user_id, gjr.requested_at,
+               u.name, u.email, u.role
+        FROM group_join_requests gjr
+        JOIN users u ON gjr.user_id = u.user_id
+        WHERE gjr.group_id = ?
+        ORDER BY gjr.requested_at ASC
+    ");
+    $stmt->execute([$group_id]);
+    return $stmt->fetchAll();
+}
+
+function approveJoinRequest(int $request_id, int $manager_user_id): bool {
+    global $pdo;
+
+    try {
+        $pdo->beginTransaction();
+
+        $stmt = $pdo->prepare("
+            SELECT group_id, user_id
+            FROM group_join_requests
+            WHERE request_id = ?
+            FOR UPDATE
+        ");
+        $stmt->execute([$request_id]);
+        $request = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$request || !canManageGroup((int)$request['group_id'], $manager_user_id)) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        $pdo->prepare("
+            INSERT IGNORE INTO group_members (group_id, user_id)
+            VALUES (?, ?)
+        ")->execute([(int)$request['group_id'], (int)$request['user_id']]);
+
+        $pdo->prepare("DELETE FROM group_join_requests WHERE request_id = ?")
+            ->execute([$request_id]);
+
+        $pdo->commit();
+        return true;
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        error_log('approveJoinRequest failed: ' . $e->getMessage());
+        return false;
+    }
+}
+
+function rejectJoinRequest(int $request_id, int $manager_user_id): bool {
+    global $pdo;
+
+    $stmt = $pdo->prepare("
+        SELECT group_id
+        FROM group_join_requests
+        WHERE request_id = ?
+    ");
+    $stmt->execute([$request_id]);
+    $request = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$request || !canManageGroup((int)$request['group_id'], $manager_user_id)) {
+        return false;
+    }
+
+    $delete = $pdo->prepare("DELETE FROM group_join_requests WHERE request_id = ?");
+    return $delete->execute([$request_id]);
+}
+
+function removeGroupMember(int $group_id, int $member_user_id, int $manager_user_id): bool {
+    global $pdo;
+
+    if (!canManageGroup($group_id, $manager_user_id) || isGroupCreator($group_id, $member_user_id)) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare("
+        DELETE FROM group_members
+        WHERE group_id = ?
+          AND user_id = ?
+    ");
+    return $stmt->execute([$group_id, $member_user_id]);
 }
 
 function getGroupMembers(int $group_id): array {
