@@ -20,6 +20,29 @@ function getAdminStats(): array {
 // ============================================================
 // GROUPS
 // ============================================================
+function ensureGroupJoinRequestsTable(): void {
+    global $pdo;
+    static $checked = false;
+
+    if ($checked) return;
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS group_join_requests (
+            request_id int(11) NOT NULL AUTO_INCREMENT,
+            group_id int(11) NOT NULL,
+            user_id int(11) NOT NULL,
+            requested_at datetime NOT NULL DEFAULT current_timestamp(),
+            PRIMARY KEY (request_id),
+            UNIQUE KEY uq_join_request_group_user (group_id, user_id),
+            KEY user_id (user_id),
+            CONSTRAINT group_join_requests_ibfk_1 FOREIGN KEY (group_id) REFERENCES study_groups (group_id) ON DELETE CASCADE,
+            CONSTRAINT group_join_requests_ibfk_2 FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+    ");
+
+    $checked = true;
+}
+
 function getUserGroups(int $user_id): array {
     global $pdo;
     $stmt = $pdo->prepare("
@@ -36,6 +59,8 @@ function getUserGroups(int $user_id): array {
 
 function getAllPublicGroups(int $user_id): array {
     global $pdo;
+    ensureGroupJoinRequestsTable();
+
     $stmt = $pdo->prepare("
         SELECT sg.*,
                (SELECT COUNT(*) FROM group_members WHERE group_id = sg.group_id) AS member_count,
@@ -142,6 +167,8 @@ function joinGroup(int $group_id, int $user_id): bool {
 
 function requestJoinGroup(int $group_id, int $user_id): bool {
     global $pdo;
+    ensureGroupJoinRequestsTable();
+
     if (isGroupMember($group_id, $user_id)) return false;
 
     $stmt = $pdo->prepare("
@@ -153,6 +180,8 @@ function requestJoinGroup(int $group_id, int $user_id): bool {
 
 function getPendingJoinRequests(int $group_id): array {
     global $pdo;
+    ensureGroupJoinRequestsTable();
+
     $stmt = $pdo->prepare("
         SELECT gjr.request_id, gjr.group_id, gjr.user_id, gjr.requested_at,
                u.name, u.email, u.role
@@ -167,6 +196,7 @@ function getPendingJoinRequests(int $group_id): array {
 
 function approveJoinRequest(int $request_id, int $manager_user_id): bool {
     global $pdo;
+    ensureGroupJoinRequestsTable();
 
     try {
         $pdo->beginTransaction();
@@ -204,6 +234,7 @@ function approveJoinRequest(int $request_id, int $manager_user_id): bool {
 
 function rejectJoinRequest(int $request_id, int $manager_user_id): bool {
     global $pdo;
+    ensureGroupJoinRequestsTable();
 
     $stmt = $pdo->prepare("
         SELECT group_id
