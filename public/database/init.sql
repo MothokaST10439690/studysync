@@ -75,7 +75,58 @@ CREATE TABLE `messages` (
   `group_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `message` text NOT NULL,
+  `file_id` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `group_invitations`
+--
+
+CREATE TABLE `group_invitations` (
+  `invitation_id` int(11) NOT NULL,
+  `group_id` int(11) NOT NULL,
+  `invited_by` int(11) NOT NULL,
+  `invited_user_id` int(11) DEFAULT NULL,
+  `email` varchar(150) NOT NULL,
+  `token` char(64) NOT NULL,
+  `status` enum('pending','accepted','declined') NOT NULL DEFAULT 'pending',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `expires_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `notification_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `type` varchar(40) NOT NULL DEFAULT 'info',
+  `title` varchar(180) NOT NULL,
+  `body` varchar(500) DEFAULT NULL,
+  `link` varchar(500) DEFAULT NULL,
+  `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `password_reset_tokens`
+--
+
+CREATE TABLE `password_reset_tokens` (
+  `reset_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `token_hash` char(64) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `used_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -123,6 +174,10 @@ CREATE TABLE `users` (
   `password_hash` varchar(255) NOT NULL,
   `role` enum('student','admin') NOT NULL DEFAULT 'student',
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `bio` text DEFAULT NULL,
+  `institution` varchar(150) DEFAULT NULL,
+  `course` varchar(150) DEFAULT NULL,
+  `avatar_path` varchar(500) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -160,7 +215,35 @@ ALTER TABLE `group_join_requests`
 ALTER TABLE `messages`
   ADD PRIMARY KEY (`id`),
   ADD KEY `group_id` (`group_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `file_id` (`file_id`);
+
+--
+-- Indexes for table `group_invitations`
+--
+ALTER TABLE `group_invitations`
+  ADD PRIMARY KEY (`invitation_id`),
+  ADD UNIQUE KEY `uq_group_invitation_token` (`token`),
+  ADD KEY `group_id` (`group_id`),
+  ADD KEY `invited_by` (`invited_by`),
+  ADD KEY `invited_user_id` (`invited_user_id`),
+  ADD KEY `email_status` (`email`,`status`);
+
+--
+-- Indexes for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`notification_id`),
+  ADD KEY `user_read_created` (`user_id`,`is_read`,`created_at`);
+
+--
+-- Indexes for table `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  ADD PRIMARY KEY (`reset_id`),
+  ADD UNIQUE KEY `uq_password_reset_hash` (`token_hash`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `expires_at` (`expires_at`);
 
 --
 -- Indexes for table `study_groups`
@@ -213,6 +296,24 @@ ALTER TABLE `messages`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `group_invitations`
+--
+ALTER TABLE `group_invitations`
+  MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  MODIFY `reset_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `study_groups`
 --
 ALTER TABLE `study_groups`
@@ -260,7 +361,28 @@ ALTER TABLE `group_join_requests`
 --
 ALTER TABLE `messages`
   ADD CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `study_groups` (`group_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `messages_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `messages_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `messages_ibfk_3` FOREIGN KEY (`file_id`) REFERENCES `files` (`file_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `group_invitations`
+--
+ALTER TABLE `group_invitations`
+  ADD CONSTRAINT `group_invitations_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `study_groups` (`group_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `group_invitations_ibfk_2` FOREIGN KEY (`invited_by`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `group_invitations_ibfk_3` FOREIGN KEY (`invited_user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  ADD CONSTRAINT `password_reset_tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `study_groups`

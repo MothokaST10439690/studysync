@@ -2,36 +2,54 @@
 ob_start();
 require_once __DIR__ . '/config/db_helpers.php';
 require_once __DIR__ . '/config/auth.php';
+require_once __DIR__ . '/config/csrf.php';
+require_once __DIR__ . '/config/uploads.php';
 requireLogin();
 
 $myGroups      = getUserGroups($_SESSION['user_id']);
 $selectedGroup = isset($_GET['group_id']) ? (int)$_GET['group_id'] : ($myGroups[0]['group_id'] ?? 0);
+$myGroupIds    = array_map(fn($group) => (int)$group['group_id'], $myGroups);
+if ($selectedGroup && !in_array($selectedGroup, $myGroupIds, true)) {
+    $selectedGroup = $myGroupIds[0] ?? 0;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     if (isset($_FILES['file'])) {
         $groupId = (int)$_POST['group_id'];
-        $file    = $_FILES['file'];
-        $maxSize = 25 * 1024 * 1024;
-        $allowed = ['pdf','docx','pptx','xlsx','png','jpg','jpeg'];
-        $ext     = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        if ($file['error'] === UPLOAD_ERR_OK && $file['size'] <= $maxSize && in_array($ext, $allowed)) {
-            $uploadDir = __DIR__ . '/../../uploads/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-            $safeName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($file['name']));
-            $dest     = $uploadDir . $safeName;
-            if (move_uploaded_file($file['tmp_name'], $dest)) {
-                uploadFile($groupId, $_SESSION['user_id'], $file['name'], '/uploads/'.$safeName, $ext, $file['size']);
+        if (!in_array($groupId, $myGroupIds, true)) {
+            $_SESSION['file_flash'] = ['type' => 'error', 'message' => 'You can only upload files to groups you have joined.'];
+            header('Location: files.php'); exit;
+        }
+
+        $stored = storeUploadedFile($_FILES['file'], 'group-files');
+        if ($stored['ok']) {
+            $fileId = uploadFile($groupId, $_SESSION['user_id'], $stored['file_name'], $stored['file_path'], $stored['file_type'], $stored['file_size']);
+            if ($fileId) {
+                $_SESSION['file_flash'] = ['type' => 'success', 'message' => 'File uploaded successfully.'];
+            } else {
+                removeStoredUpload($stored['file_path']);
+                $_SESSION['file_flash'] = ['type' => 'error', 'message' => 'The file could not be added to the library.'];
             }
+        } else {
+            $_SESSION['file_flash'] = ['type' => 'error', 'message' => $stored['error']];
         }
         header("Location: files.php?group_id=$groupId"); exit;
     }
     if (isset($_POST['delete_file_id'])) {
         $fileId  = (int)$_POST['delete_file_id'];
         $groupId = (int)($_POST['group_id'] ?? $selectedGroup);
-        deleteFile($fileId, $_SESSION['user_id']);
+        $file = getFileById($fileId);
+        if ($file && (int)$file['uploaded_by'] === (int)$_SESSION['user_id'] && deleteFile($fileId, $_SESSION['user_id'])) {
+            removeStoredUpload($file['file_path']);
+            $_SESSION['file_flash'] = ['type' => 'success', 'message' => 'File deleted.'];
+        }
         header("Location: files.php?group_id=$groupId"); exit;
     }
 }
+
+$fileFlash = $_SESSION['file_flash'] ?? null;
+unset($_SESSION['file_flash']);
 
 $files      = $selectedGroup ? getGroupFiles($selectedGroup) : [];
 $totalSize  = round(array_sum(array_column($files,'file_size')) / 1024 / 1024, 1);
@@ -67,6 +85,15 @@ function fileIcon(string $ext): array {
 </div>
 
 <!-- ── STATS ──────────────────────────────────────────────── -->
+<?php if ($fileFlash): ?>
+<div style="margin-bottom:18px;padding:12px 14px;border-radius:9px;font-size:13px;
+            <?= $fileFlash['type'] === 'success'
+                ? 'background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);'
+                : 'background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);' ?>">
+    <?= htmlspecialchars($fileFlash['message']) ?>
+</div>
+<?php endif; ?>
+
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;">
     <div class="stat-card">
         <div class="stat-card-label">Total Files</div>
@@ -121,7 +148,7 @@ function fileIcon(string $ext): array {
                         <div style="display:flex;align-items:center;gap:12px;">
                             <i class="bi <?= $iconClass ?>" style="font-size:22px;color:<?= $iconColor ?>;flex-shrink:0;"></i>
                             <div>
-                                <a href="<?= htmlspecialchars($f['file_path']) ?>" download
+                                <a href="download.php?id=<?= (int)$f['file_id'] ?>"
                                    style="font-weight:600;color:var(--text-primary);text-decoration:none;font-size:13.5px;"
                                    onmouseover="this.style.color='var(--copper-dark)'"
                                    onmouseout="this.style.color='var(--text-primary)'">
@@ -139,6 +166,7 @@ function fileIcon(string $ext): array {
                     <td style="text-align:right;">
                         <?php if ($f['uploaded_by'] == $_SESSION['user_id']): ?>
                         <form method="POST" style="display:inline;" onsubmit="return confirm('Delete this file?')">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
                             <input type="hidden" name="delete_file_id" value="<?= $f['file_id'] ?>">
                             <input type="hidden" name="group_id"       value="<?= $selectedGroup ?>">
                             <button type="submit" style="padding:5px 12px;border-radius:6px;border:1px solid var(--red-border);
@@ -169,6 +197,7 @@ function fileIcon(string $ext): array {
         </div>
         <div class="ss-modal-body">
             <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
 
                 <div style="margin-bottom:14px;">
                     <label class="ss-label">Group</label>
@@ -184,13 +213,13 @@ function fileIcon(string $ext): array {
                 <div style="margin-bottom:10px;">
                     <label class="ss-label">Choose File</label>
                     <input type="file" name="file" required
-                           accept=".pdf,.docx,.pptx,.xlsx,.png,.jpg,.jpeg"
+                           accept=".pdf,.docx,.pptx,.xlsx,.txt,.csv,.zip,.png,.jpg,.jpeg,.gif,.webp"
                            class="ss-input">
                 </div>
 
                 <div style="background:var(--cream);border-radius:8px;padding:10px 14px;
                             font-size:12px;color:var(--text-muted);margin-bottom:4px;">
-                    Max 25 MB · PDF, DOCX, PPTX, XLSX, PNG, JPG
+                    Max 25 MB &middot; Documents, spreadsheets, archives and images
                 </div>
 
                 <div class="ss-modal-footer" style="padding:16px 0 0;border:none;">

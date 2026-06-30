@@ -1,6 +1,9 @@
 <?php
 // layout.php — Obsidian & Copper theme — fully responsive
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
+$unreadNotificationCount = (isset($_SESSION['user_id']) && function_exists('getUnreadNotificationCount'))
+    ? getUnreadNotificationCount((int)$_SESSION['user_id'])
+    : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -207,7 +210,9 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         font-size: 13px;
         color: var(--copper);
         flex-shrink: 0;
+        overflow: hidden;
     }
+    .ss-avatar img { width:100%; height:100%; object-fit:cover; }
 
     .ss-user-name { font-size: 13px; font-weight: 600; color: #fff; }
     .ss-user-role { font-size: 11px; color: rgba(255,255,255,.35); margin-top: 1px; }
@@ -300,6 +305,8 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
     }
 
     .ss-icon-btn:hover { background: var(--cream); }
+    .ss-icon-btn { position:relative; }
+    .ss-notification-badge { position:absolute;right:-5px;top:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--red);color:#fff;border:2px solid #fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center; }
 
     /* ── CONTENT AREA ───────────────────────────────────────── */
     .ss-content {
@@ -771,6 +778,13 @@ if ('serviceWorker' in navigator) {
             <a href="calendar.php" onclick="closeSidebar()" class="<?= $current_page === 'calendar' ? 'active' : '' ?>">
                 <i class="bi bi-calendar-event-fill"></i> Calendar
             </a>
+            <a href="notifications.php" onclick="closeSidebar()" class="<?= $current_page === 'notifications' ? 'active' : '' ?>">
+                <i class="bi bi-bell-fill"></i> Notifications
+                <?php if ($unreadNotificationCount): ?><span style="margin-left:auto;background:var(--copper);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;"><?= min($unreadNotificationCount, 99) ?></span><?php endif; ?>
+            </a>
+            <a href="profile.php" onclick="closeSidebar()" class="<?= $current_page === 'profile' ? 'active' : '' ?>">
+                <i class="bi bi-person-circle"></i> My Profile
+            </a>
 
             <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
             <div class="ss-nav-label" style="margin-top:8px;">Administration</div>
@@ -781,15 +795,19 @@ if ('serviceWorker' in navigator) {
         </nav>
 
         <div class="ss-user">
-            <div class="ss-user-row">
+            <a href="profile.php" class="ss-user-row" style="text-decoration:none;">
                 <div class="ss-avatar">
-                    <?= strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)) ?>
+                    <?php if (!empty($_SESSION['user_avatar'])): ?>
+                        <img src="<?= htmlspecialchars($_SESSION['user_avatar']) ?>" alt="">
+                    <?php else: ?>
+                        <?= strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)) ?>
+                    <?php endif; ?>
                 </div>
                 <div>
                     <div class="ss-user-name"><?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></div>
                     <div class="ss-user-role"><?= ucfirst($_SESSION['user_role'] ?? '') ?></div>
                 </div>
-            </div>
+            </a>
             <a href="logout.php" class="ss-signout">
                 <i class="bi bi-box-arrow-right"></i> Sign Out
             </a>
@@ -807,6 +825,13 @@ if ('serviceWorker' in navigator) {
             </button>
             <div class="ss-topbar-title"><?= ucwords(str_replace('-', ' ', $current_page)) ?></div>
             <div class="ss-topbar-right">
+                <a href="profile.php" class="ss-icon-btn" title="Profile" aria-label="Profile">
+                    <i class="bi bi-person"></i>
+                </a>
+                <a href="notifications.php" class="ss-icon-btn" title="Notifications" aria-label="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <?php if ($unreadNotificationCount): ?><span class="ss-notification-badge"><?= min($unreadNotificationCount, 99) ?></span><?php endif; ?>
+                </a>
                 <a href="logout.php" class="ss-icon-btn" title="Sign out">
                     <i class="bi bi-box-arrow-right" style="font-size:14px;"></i>
                 </a>

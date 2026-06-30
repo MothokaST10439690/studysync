@@ -2,7 +2,7 @@
 header('Content-Type: application/javascript');
 header('Service-Worker-Allowed: /');
 ?>
-const CACHE_NAME = 'studysync-v2';
+const CACHE_NAME = 'studysync-v3';
 const OFFLINE_URL = '/offline.php';
 
 const PRECACHE_ASSETS = [

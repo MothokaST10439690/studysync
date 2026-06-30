@@ -1,6 +1,6 @@
 ﻿# StudySync .gitignore
-/config/db_connect.php
-/uploads/
+/public/uploads/*
+!/public/uploads/.gitkeep
 /vendor/
 .env
 *.log

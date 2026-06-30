@@ -1,6 +1,8 @@
 <?php
 ob_start();
 require_once __DIR__ . '/config/db_connect.php';
+require_once __DIR__ . '/config/auth.php';
+require_once __DIR__ . '/config/csrf.php';
 
 
 if (isset($_SESSION['user_id'])) {
@@ -12,6 +14,7 @@ $error   = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     $name     = trim($_POST['name']             ?? '');
     $email    = trim($_POST['email']            ?? '');
     $password = $_POST['password']              ?? '';
@@ -21,8 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'All fields are required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please enter a valid email address.';
-    } elseif (strlen($password) < 6) {
-        $error = 'Password must be at least 6 characters.';
+    } elseif (strlen($password) < 8) {
+        $error = 'Password must be at least 8 characters.';
     } elseif ($password !== $confirm) {
         $error = 'Passwords do not match.';
     } else {
@@ -31,11 +34,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmt->fetch()) {
             $error = 'This email is already registered.';
         } else {
-            $role = (strtolower($email) === 'jimmyadmin@gmail.com') ? 'admin' : 'student';
+            $role = 'student';
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)");
             if ($stmt->execute([$name, $email, $hash, $role])) {
-                $success = 'Account created successfully. You can now sign in.';
+                $next = safeLocalRedirect($_POST['next'] ?? $_GET['next'] ?? null, 'dashboard.php');
+                header('Location: login.php?registered=1&next=' . rawurlencode($next));
+                exit;
             } else {
                 $error = 'Something went wrong. Please try again.';
             }
@@ -60,6 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php endif; ?>
 
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
+    <input type="hidden" name="next" value="<?= htmlspecialchars($_GET['next'] ?? '') ?>">
 
     <div class="auth-field">
         <input type="text" name="name" placeholder="Full name"
@@ -74,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div class="auth-field">
-        <input type="password" name="password" placeholder="Password (min 6 chars)"
+        <input type="password" name="password" placeholder="Password (min 8 chars)"
                class="auth-input" required>
     </div>
 

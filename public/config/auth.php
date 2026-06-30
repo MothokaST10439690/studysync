@@ -22,12 +22,22 @@ function requireAdmin(): void {
     }
 }
 
-function loginUser(int $userId, string $name, string $role): void {
+function loginUser(int $userId, string $name, string $role, ?string $avatarPath = null): void {
     // Regenerate session ID to prevent session fixation attacks
     session_regenerate_id(true);
     $_SESSION['user_id']   = $userId;
     $_SESSION['user_name'] = $name;
     $_SESSION['user_role'] = $role;
+    $_SESSION['user_avatar'] = $avatarPath;
+}
+
+function safeLocalRedirect(?string $target, string $fallback = 'dashboard.php'): string {
+    if (!$target || preg_match('/^[a-z][a-z0-9+.-]*:/i', $target) || str_starts_with($target, '//')) {
+        return $fallback;
+    }
+
+    $target = ltrim($target, '/');
+    return preg_match('/^[a-zA-Z0-9._?=&%-]+$/', $target) ? $target : $fallback;
 }
 
 function logoutUser(): void {

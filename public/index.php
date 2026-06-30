@@ -399,6 +399,16 @@ $pageTitle = 'StudySync | Smart Academic Collaboration';
                 <h3>Smart Calendar</h3>
                 <p>Visualize assignments and deadlines across all groups.</p>
             </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="bi bi-chat-dots-fill"></i></div>
+                <h3>Rich Group Chat</h3>
+                <p>Share messages, pictures and downloadable files in context.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="bi bi-bell-fill"></i></div>
+                <h3>Profiles & Notifications</h3>
+                <p>Invite classmates, build a profile and never miss a group update.</p>
+            </div>
         </div>
     </section>
 
