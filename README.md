@@ -13,6 +13,7 @@ StudySync is a responsive PHP and MySQL collaboration platform for student group
 - Student profile pages with photo, institution, course, bio, and activity statistics
 - One-time password-reset tokens that expire after 60 minutes
 - In-app notifications for invitations and group membership events
+- Safe automatic page refreshes that pause while forms or uploads are in progress
 - Responsive desktop/mobile navigation and installable PWA metadata
 - Admin dashboard for platform-level oversight
 
@@ -68,7 +69,7 @@ The repository includes Railway/Nixpacks configuration that serves `/app/public`
 
 Open a group, choose **Chat**, select the round `+` button, choose a supported file, and send. The message shows an image preview when appropriate and always includes an authenticated download action. Recent files also appear in the **Chat files** panel.
 
-Supported types: PDF, DOCX, PPTX, XLSX, TXT, CSV, ZIP, PNG, JPG/JPEG, GIF, and WebP. The limit is 25 MB per group file.
+Supported types: PDF, DOCX, PPTX, XLSX, TXT, CSV, ZIP, PNG, JPG/JPEG, GIF, and WebP. The limit is 100 MB per group file.
 
 ### Group invitations
 

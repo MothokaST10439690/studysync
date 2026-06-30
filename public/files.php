@@ -219,7 +219,7 @@ function fileIcon(string $ext): array {
 
                 <div style="background:var(--cream);border-radius:8px;padding:10px 14px;
                             font-size:12px;color:var(--text-muted);margin-bottom:4px;">
-                    Max 25 MB &middot; Documents, spreadsheets, archives and images
+                    Max 100 MB &middot; Documents, spreadsheets, archives and images
                 </div>
 
                 <div class="ss-modal-footer" style="padding:16px 0 0;border:none;">

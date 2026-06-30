@@ -888,6 +888,75 @@ if ('serviceWorker' in navigator) {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeSidebar();
     });
+
+    /**
+     * Keep server-rendered pages current without interrupting work in progress.
+     * Native form submissions already reload their own page; the storage event
+     * refreshes other open StudySync tabs after the same action.
+     */
+    (function setupSafeAutoRefresh() {
+        const actionKey = 'studysync:last-user-action';
+        const refreshIntervalMs = 30000;
+        const loadedAt = Date.now();
+        let formIsDirty = false;
+        let formIsSubmitting = false;
+
+        function hasOpenModal() {
+            return Array.from(document.querySelectorAll('.ss-modal-bg')).some(function(modal) {
+                return window.getComputedStyle(modal).display !== 'none';
+            });
+        }
+
+        function canRefreshSafely() {
+            return document.visibilityState === 'visible'
+                && !formIsDirty
+                && !formIsSubmitting
+                && !hasOpenModal();
+        }
+
+        function refreshIfSafe() {
+            if (canRefreshSafely()) {
+                window.location.reload();
+            }
+        }
+
+        document.addEventListener('input', function(event) {
+            if (event.target.closest('form')) formIsDirty = true;
+        });
+
+        document.addEventListener('change', function(event) {
+            if (event.target.closest('form')) formIsDirty = true;
+        });
+
+        document.addEventListener('submit', function() {
+            formIsSubmitting = true;
+            try {
+                localStorage.setItem(actionKey, String(Date.now()));
+            } catch (error) {
+                // Auto-refresh is optional; form submission must still continue.
+            }
+        });
+
+        window.addEventListener('storage', function(event) {
+            if (event.key === actionKey && Number(event.newValue) > loadedAt) {
+                refreshIfSafe();
+            }
+        });
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState !== 'visible') return;
+
+            try {
+                if (Number(localStorage.getItem(actionKey)) > loadedAt) {
+                    refreshIfSafe();
+                }
+            } catch (error) {
+                // The timed refresh below still works when storage is unavailable.
+            }
+        });
+
+        window.setInterval(refreshIfSafe, refreshIntervalMs);
+    })();
     </script>
 
 </body>

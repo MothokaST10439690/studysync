@@ -9,7 +9,7 @@ function storeUploadedFile(array $file, string $category = 'group-files'): array
 {
     $rules = [
         'group-files' => [
-            'max' => 25 * 1024 * 1024,
+            'max' => 100 * 1024 * 1024,
             'extensions' => ['pdf', 'docx', 'pptx', 'xlsx', 'txt', 'csv', 'zip', 'png', 'jpg', 'jpeg', 'gif', 'webp'],
         ],
         'avatars' => [
@@ -22,14 +22,20 @@ function storeUploadedFile(array $file, string $category = 'group-files'): array
         return ['ok' => false, 'error' => 'Unknown upload category.'];
     }
 
-    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+    $uploadError = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+    if (in_array($uploadError, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+        $limit = (int)round($rules[$category]['max'] / 1024 / 1024);
+        return ['ok' => false, 'error' => "The file is too large. The maximum size is {$limit} MB."];
+    }
+
+    if ($uploadError !== UPLOAD_ERR_OK) {
         return ['ok' => false, 'error' => 'The upload did not complete. Please try again.'];
     }
 
     $size = (int)($file['size'] ?? 0);
     if ($size <= 0 || $size > $rules[$category]['max']) {
         $limit = (int)round($rules[$category]['max'] / 1024 / 1024);
-        return ['ok' => false, 'error' => "Files must be smaller than {$limit} MB."];
+        return ['ok' => false, 'error' => "Files must be no larger than {$limit} MB."];
     }
 
     $originalName = basename((string)($file['name'] ?? 'upload'));

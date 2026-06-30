@@ -766,9 +766,9 @@ add_body("The file library remains available as a dedicated page and as a group 
 add_table(
     ["Category", "Supported formats", "Limit"],
     [
-        ["Documents", "PDF, DOCX, PPTX, XLSX, TXT and CSV", "25 MB"],
-        ["Archives", "ZIP", "25 MB"],
-        ["Images", "PNG, JPG/JPEG, GIF and WebP", "25 MB"],
+        ["Documents", "PDF, DOCX, PPTX, XLSX, TXT and CSV", "100 MB"],
+        ["Archives", "ZIP", "100 MB"],
+        ["Images", "PNG, JPG/JPEG, GIF and WebP", "100 MB"],
         ["Profile photo", "PNG, JPG/JPEG and WebP", "5 MB"],
     ],
     [2100, 5160, 2100],
@@ -808,7 +808,7 @@ add_callout("Production requirement", "Configure APP_URL, MAIL_FROM and a workin
 
 add_heading("4.3 Share a file in chat", 2)
 add_number("Open a group Chat tab and choose the round + button.")
-add_number("Select a supported file no larger than 25 MB.")
+add_number("Select a supported file no larger than 100 MB.")
 add_number("Optionally type a message and choose Send.")
 add_number("The upload is saved to the group library and its database ID is linked to the new message.")
 add_number("Group members can preview images and download the attachment from the message or Chat files panel.")
