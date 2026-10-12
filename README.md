@@ -1,105 +1,114 @@
-# StudySync
-# ReBranding to LSC made by JKS KINETICS PTY LTD
-StudySync is a responsive PHP and MySQL collaboration platform for student groups. It combines group workspaces, task tracking, a calendar, file sharing, chat, member profiles, invitations, password recovery, notifications, admin tools, and progressive-web-app support.
+LSC
+Rebranding notice: StudySync has been rebranded to LSC, made by JKS KINETICS PTY LTD. The product, database, and repository may still carry the legacy StudySync name in file paths, table names, and environment identifiers until those are migrated. This document uses LSC for the product name and keeps legacy names only where they refer to actual files or existing installations.
 
-## Current feature set
+LSC (formerly StudySync) is a responsive PHP and MySQL collaboration platform for student groups. It combines group workspaces, task tracking, a calendar, file sharing, chat, member profiles, invitations, password recovery, notifications, admin tools, and progressive-web-app support.
 
-- Public and private study groups with join-request moderation
-- Group tasks, due dates, status tracking, and calendar views
-- Shared file library with authenticated downloads
-- Group chat with a `+` attachment control for pictures and documents
-- A chat file panel that keeps recent shared resources within reach
-- Seven-day group invitations by email address and shareable link
-- Student profile pages with photo, institution, course, bio, and activity statistics
-- One-time password-reset tokens that expire after 60 minutes
-- In-app notifications for invitations and group membership events
-- Safe automatic page refreshes that pause while forms or uploads are in progress
-- Responsive desktop/mobile navigation and installable PWA metadata
-- Admin dashboard for platform-level oversight
+Current feature set
+Public and private study groups with join-request moderation
 
-## Requirements
+Group tasks, due dates, status tracking, and calendar views
 
-- PHP 8.2 or newer with PDO MySQL and `mbstring`
-- MySQL 8 or MariaDB 10.4+
-- A web server whose document root is the `public` directory
-- Write permission for `public/uploads`
+Shared file library with authenticated downloads
 
-## Environment variables
+Group chat with a + attachment control for pictures and documents
 
-| Variable | Required | Purpose |
-|---|---:|---|
-| `MYSQLHOST` | Yes | MySQL host name |
-| `MYSQLPORT` | Yes | MySQL port |
-| `MYSQLDATABASE` | Yes | Database name |
-| `MYSQLUSER` | Yes | Database user |
-| `MYSQLPASSWORD` | Yes | Database password |
-| `APP_URL` | Recommended | Public base URL used in password-reset links |
-| `APP_ENV` | Recommended | Set to `production` in production |
-| `MAIL_FROM` | For email reset delivery | Sender address used by PHP `mail()` |
+A chat file panel that keeps recent shared resources within reach
 
-## Database setup
+Seven-day group invitations by email address and shareable link
 
+Student profile pages with photo, institution, course, bio, and activity statistics
+
+One-time password-reset tokens that expire after 60 minutes
+
+In-app notifications for invitations and group membership events
+
+Safe automatic page refreshes that pause while forms or uploads are in progress
+
+Responsive desktop/mobile navigation and installable PWA metadata
+
+Admin dashboard for platform-level oversight
+
+Requirements
+PHP 8.2 or newer with PDO MySQL and mbstring
+
+MySQL 8 or MariaDB 10.4+
+
+A web server whose document root is the public directory
+
+Write permission for public/uploads
+
+Environment variables
+Variable	Required	Purpose
+MYSQLHOST	Yes	MySQL host name
+MYSQLPORT	Yes	MySQL port
+MYSQLDATABASE	Yes	Database name
+MYSQLUSER	Yes	Database user
+MYSQLPASSWORD	Yes	Database password
+APP_URL	Recommended	Public base URL used in password-reset links
+APP_ENV	Recommended	Set to production in production
+MAIL_FROM	For email reset delivery	Sender address used by PHP mail()
+Database setup
 For a new installation, create the database and import:
 
-```text
+text
+
 public/database/init.sql
-```
+For an existing database created under the StudySync name, back it up and run this migration once:
 
-For an existing StudySync database, back it up and run this migration once:
+text
 
-```text
 public/database/2026_06_29_collaboration_features.sql
-```
-
 The migration adds chat-file relationships, group invitations, notifications, password-reset tokens, and profile fields.
 
-## Local start
+Local start
+Configure the environment variables above.
 
-1. Configure the environment variables above.
-2. Make `public` the web document root.
-3. Ensure `public/uploads` is writable by PHP.
-4. Import the correct SQL file for a fresh or existing database.
-5. Start the PHP/web-server process of your choice.
+Make public the web document root.
 
-The repository includes Railway/Nixpacks configuration that serves `/app/public`.
+Ensure public/uploads is writable by PHP.
 
-## New collaboration workflows
+Import the correct SQL file for a fresh or existing database.
 
-### Chat attachments
+Start the PHP/web-server process of your choice.
 
-Open a group, choose **Chat**, select the round `+` button, choose a supported file, and send. The message shows an image preview when appropriate and always includes an authenticated download action. Recent files also appear in the **Chat files** panel.
+The repository includes Railway/Nixpacks configuration that serves /app/public.
+
+New collaboration workflows
+Chat attachments
+Open a group, choose Chat, select the round + button, choose a supported file, and send. The message shows an image preview when appropriate and always includes an authenticated download action. Recent files also appear in the Chat files panel.
 
 Supported types: PDF, DOCX, PPTX, XLSX, TXT, CSV, ZIP, PNG, JPG/JPEG, GIF, and WebP. The limit is 100 MB per group file.
 
-### Group invitations
+Group invitations
+Group creators and administrators can open Members → Invite people, enter an email address, and create a link valid for seven days. Registered users receive an in-app notification. For an unregistered person, copy and send the generated link directly.
 
-Group creators and administrators can open **Members → Invite people**, enter an email address, and create a link valid for seven days. Registered users receive an in-app notification. For an unregistered person, copy and send the generated link directly.
+Password recovery
+The sign-in page links to Forgot password?. Reset tokens are random, stored only as SHA-256 hashes, expire after 60 minutes, and become invalid after one successful use. Configure APP_URL, MAIL_FROM, and a working PHP mail transport for production email delivery.
 
-### Password recovery
+Security notes
+New account, profile, invite, notification, chat attachment, file, and recovery actions use CSRF tokens.
 
-The sign-in page links to **Forgot password?**. Reset tokens are random, stored only as SHA-256 hashes, expire after 60 minutes, and become invalid after one successful use. Configure `APP_URL`, `MAIL_FROM`, and a working PHP mail transport for production email delivery.
+Downloads verify that the requester belongs to the file's group.
 
-## Security notes
+Uploads use random stored names, extension allowlists, size limits, and image validation.
 
-- New account, profile, invite, notification, chat attachment, file, and recovery actions use CSRF tokens.
-- Downloads verify that the requester belongs to the file's group.
-- Uploads use random stored names, extension allowlists, size limits, and image validation.
-- Group management actions are limited to group creators or administrators.
-- Password-reset responses do not reveal whether an email address exists.
-- New registrations always receive the student role; administrator access must be granted deliberately in the database or through a future secured admin workflow.
+Group management actions are limited to group creators or administrators.
 
-## Production considerations
+Password-reset responses do not reveal whether an email address exists.
 
+New registrations always receive the student role; administrator access must be granted deliberately in the database or through a future secured admin workflow.
+
+Production considerations
 Railway's local filesystem can be ephemeral. Use a persistent volume or object storage before relying on uploaded files in production. Configure a transactional email provider or SMTP bridge for dependable reset-email delivery. Back up the database before applying migrations.
 
-## Verification
+Verification
+All PHP files pass PHP 8.2 syntax lint. Before release, run the acceptance checklist in docs/StudySync_Project_Documentation.docx against a staging database and verify desktop and mobile layouts.
 
-All PHP files pass PHP 8.2 syntax lint. Before release, run the acceptance checklist in `docs/StudySync_Project_Documentation.docx` against a staging database and verify desktop and mobile layouts.
-
-## Documentation
-
+Documentation
 The full architecture, user guide, deployment procedure, security model, and release checklist are in:
 
-```text
+text
+
 docs/StudySync_Project_Documentation.docx
-```
+About
+LSC is made by JKS KINETICS PTY LTD.
