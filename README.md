@@ -1,5 +1,5 @@
 # StudySync
-
+# ReBranding to LSC made by JKS KINETICS PTY LTD
 StudySync is a responsive PHP and MySQL collaboration platform for student groups. It combines group workspaces, task tracking, a calendar, file sharing, chat, member profiles, invitations, password recovery, notifications, admin tools, and progressive-web-app support.
 
 ## Current feature set
